@@ -14,6 +14,7 @@ use std::time::Duration;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
+use chrono::naive::NaiveDate;
 use chrono::offset::FixedOffset;
 use chrono::offset::TimeZone;
 use chrono::offset::Utc;
@@ -29,19 +30,31 @@ use serde::Deserialize;
 type DateFn = fn(&str) -> Result<DateTime<FixedOffset>, ParseError>;
 
 /// The list of time stamp formats we support.
-const PARSE_FNS: [DateFn; 3] = [
+const TIME_PARSE_FNS: [DateFn; 3] = [
   |s| FixedOffset::east(0).datetime_from_str(s, "%Y-%m-%dT%H:%M:%S%.fZ"),
   |s| FixedOffset::east(0).datetime_from_str(s, "%Y-%m-%dT%H:%M:%SZ"),
   |s| DateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%S%.f%z"),
 ];
 
+const DATE_PARSE_FNS: [DateFn; 1] = [|s| {
+  NaiveDate::parse_from_str(s, "%Y-%m-%d").and_then(|date| {
+    Ok(DateTime::from_utc(
+      date.and_hms(0, 0, 0),
+      FixedOffset::east(0),
+    ))
+  })
+}];
+
 
 /// Parse a `SystemTime` from a string.
-fn parse_system_time_from_str<'de, D>(time: &str) -> Result<SystemTime, D::Error>
+fn parse_system_time_from_str<'de, D>(
+  time: &str,
+  parse_fns: &[DateFn],
+) -> Result<SystemTime, D::Error>
 where
   D: Deserializer<'de>,
 {
-  for parse_fn in &PARSE_FNS {
+  for parse_fn in parse_fns {
     // Ideally we would want to only continue in case of
     // ParseErrorKind::Invalid. However, that member is private...
     let datetime = match parse_fn(&time) {
@@ -74,7 +87,7 @@ where
   D: Deserializer<'de>,
 {
   let time = String::deserialize(deserializer)?;
-  parse_system_time_from_str::<D>(&time)
+  parse_system_time_from_str::<D>(&time, &TIME_PARSE_FNS)
 }
 
 
@@ -86,9 +99,19 @@ where
   D: Deserializer<'de>,
 {
   match Option::<String>::deserialize(deserializer)? {
-    Some(time) => Some(parse_system_time_from_str::<D>(&time)).transpose(),
+    Some(time) => Some(parse_system_time_from_str::<D>(&time, &TIME_PARSE_FNS)).transpose(),
     None => Ok(None),
   }
+}
+
+
+/// Deserialize a `SystemTime` from a date.
+pub fn system_time_from_date_str<'de, D>(deserializer: D) -> Result<SystemTime, D::Error>
+where
+  D: Deserializer<'de>,
+{
+  let date = String::deserialize(deserializer)?;
+  parse_system_time_from_str::<D>(&date, &DATE_PARSE_FNS)
 }
 
 
@@ -161,6 +184,23 @@ mod tests {
     for json in &times {
       let time = from_json::<Time>(json)?;
       assert_eq!(time.time, UNIX_EPOCH + Duration::from_secs(1522584000));
+    }
+    Ok(())
+  }
+
+  #[derive(Debug, Deserialize)]
+  struct Date {
+    #[serde(deserialize_with = "system_time_from_date_str")]
+    date: SystemTime,
+  }
+
+  #[test]
+  fn deserialize_system_time_from_date_str() -> Result<(), JsonError> {
+    let dates = [r#"{"date": "2019-08-01"}"#];
+
+    for json in &dates {
+      let date = from_json::<Date>(json)?;
+      assert_eq!(date.date, UNIX_EPOCH + Duration::from_secs(1564617600));
     }
     Ok(())
   }
