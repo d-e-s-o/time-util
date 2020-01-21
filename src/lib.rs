@@ -126,6 +126,18 @@ where
 }
 
 
+/// Deserialize a `SystemTime` from a timestamp containing the
+/// milliseconds since 1970-01-01.
+pub fn system_time_from_millis<'de, D>(deserializer: D) -> Result<SystemTime, D::Error>
+where
+  D: Deserializer<'de>,
+{
+  let ms = u64::deserialize(deserializer)?;
+  let time = UNIX_EPOCH + Duration::from_millis(ms);
+  Ok(time)
+}
+
+
 /// Serialize a `SystemTime` into a RFC3339 time stamp.
 pub fn system_time_to_rfc3339<S>(time: &SystemTime, serializer: S) -> Result<S::Ok, S::Error>
 where
@@ -151,6 +163,20 @@ where
     Some(time) => system_time_to_rfc3339(time, serializer),
     None => serializer.serialize_none(),
   }
+}
+
+
+/// Serialize a `SystemTime` into a timestamp containing the
+/// milliseconds since 1970-01-01.
+pub fn system_time_to_millis<S>(time: &SystemTime, serializer: S) -> Result<S::Ok, S::Error>
+where
+  S: Serializer,
+{
+  // It should be safe to unwrap here given that there is absolutely no
+  // way for a time stamp to ever point to a time before `UNIX_EPOCH`
+  // and that the only (documented) error case for `duration_since`.
+  let millis = time.duration_since(UNIX_EPOCH).unwrap().as_millis();
+  serializer.serialize_u128(millis)
 }
 
 
@@ -229,6 +255,22 @@ mod tests {
     };
     let json = to_json(&time)?;
     assert_eq!(json, r#"{"time":"2018-12-06T20:47:00+00:00"}"#);
+    Ok(())
+  }
+
+  #[derive(Debug, Deserialize, Serialize)]
+  struct MsTime {
+    #[serde(
+      deserialize_with = "system_time_from_millis",
+      serialize_with = "system_time_to_rfc3339",
+    )]
+    time: SystemTime,
+  }
+
+  #[test]
+  fn deserialize_system_time_from_millis() -> Result<(), JsonError> {
+    let time = from_json::<MsTime>(r#"{"time": 1517461200000}"#)?;
+    assert_eq!(time.time, UNIX_EPOCH + Duration::from_secs(1517461200));
     Ok(())
   }
 }
