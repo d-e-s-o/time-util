@@ -18,7 +18,7 @@ use std::time::UNIX_EPOCH;
 
 use chrono::naive::NaiveDate;
 use chrono::offset::FixedOffset;
-use chrono::offset::TimeZone;
+use chrono::offset::TimeZone as _;
 use chrono::offset::Utc;
 use chrono::DateTime;
 use chrono::ParseError;
@@ -28,6 +28,8 @@ use serde::de::Error;
 use serde::de::Unexpected;
 use serde::ser::Serializer;
 use serde::Deserialize;
+
+use crate::timezone::TimeZone;
 
 /// The Eastern Standard Time time zone.
 pub use crate::timezone::EST;
@@ -142,6 +144,21 @@ where
   let ms = u64::deserialize(deserializer)?;
   let time = UNIX_EPOCH + Duration::from_millis(ms);
   Ok(time)
+}
+
+
+/// Deserialize a `SystemTime` from a timestamp containing the
+/// milliseconds since 1970-01-01 in a given time zone.
+///
+/// The given time zone type specifies the time zone in which the
+/// to-be-parsed time stamp is provided in. It will then be converted to
+/// UTC.
+pub fn system_time_from_millis_in_tz<'de, TZ, D>(deserializer: D) -> Result<SystemTime, D::Error>
+where
+  D: Deserializer<'de>,
+  TZ: TimeZone,
+{
+  system_time_from_millis(deserializer).map(TZ::add)
 }
 
 
@@ -285,6 +302,26 @@ mod tests {
   fn deserialize_system_time_from_millis() -> Result<(), JsonError> {
     let time = from_json::<MsTime>(r#"{"time": 1517461200000}"#)?;
     assert_eq!(time.time, UNIX_EPOCH + Duration::from_secs(1517461200));
+    Ok(())
+  }
+
+
+  #[derive(Debug, Deserialize, Serialize)]
+  struct MsTimeEST {
+    #[serde(
+      deserialize_with = "system_time_from_millis_in_tz::<EST, _>",
+      serialize_with = "system_time_to_rfc3339",
+    )]
+    time: SystemTime,
+  }
+
+  #[test]
+  fn deserialize_system_time_from_millis_in_tz() -> Result<(), JsonError> {
+    // This time stamp represents 2018-02-01T00:00:00-05:00:
+    // $ date --date='2018-02-01T00:00:00-05:00' +'%s'
+    let time = from_json::<MsTimeEST>(r#"{"time": 1517461200000}"#)?;
+    let expected = parse_system_time_from_str("2018-02-01T00:00:00.000Z").unwrap();
+    assert_eq!(time.time, expected);
     Ok(())
   }
 }
