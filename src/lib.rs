@@ -9,6 +9,8 @@
 //! from. We treat such a time as having no associated time zone. Think
 //! of it as being in UTC.
 
+mod timezone;
+
 use std::convert::TryInto;
 use std::time::Duration;
 use std::time::SystemTime;
@@ -26,6 +28,12 @@ use serde::de::Error;
 use serde::de::Unexpected;
 use serde::ser::Serializer;
 use serde::Deserialize;
+
+/// The Eastern Standard Time time zone.
+pub use crate::timezone::EST;
+/// The Coordinated Universal Time time zone.
+pub use crate::timezone::UTC;
+
 
 type DateFn = fn(&str) -> Result<DateTime<FixedOffset>, ParseError>;
 
