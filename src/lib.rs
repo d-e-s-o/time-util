@@ -214,7 +214,6 @@ mod tests {
   use serde::Serialize;
   use serde_json::from_str as from_json;
   use serde_json::to_string as to_json;
-  use serde_json::Error as JsonError;
 
 
   #[test]
@@ -231,7 +230,7 @@ mod tests {
   }
 
   #[test]
-  fn deserialize_system_time_from_str() -> Result<(), JsonError> {
+  fn deserialize_system_time_from_str() {
     let times = [
       r#"{"time": "2018-04-01T12:00:00Z"}"#,
       r#"{"time": "2018-04-01T12:00:00.000Z"}"#,
@@ -239,10 +238,9 @@ mod tests {
     ];
 
     for json in &times {
-      let time = from_json::<Time>(json)?;
+      let time = from_json::<Time>(json).unwrap();
       assert_eq!(time.time, UNIX_EPOCH + Duration::from_secs(1522584000));
     }
-    Ok(())
   }
 
   #[derive(Debug, Deserialize)]
@@ -252,14 +250,13 @@ mod tests {
   }
 
   #[test]
-  fn deserialize_system_time_from_date_str() -> Result<(), JsonError> {
+  fn deserialize_system_time_from_date_str() {
     let dates = [r#"{"date": "2019-08-01"}"#];
 
     for json in &dates {
-      let date = from_json::<Date>(json)?;
+      let date = from_json::<Date>(json).unwrap();
       assert_eq!(date.date, UNIX_EPOCH + Duration::from_secs(1564617600));
     }
-    Ok(())
   }
 
 
@@ -273,20 +270,18 @@ mod tests {
   }
 
   #[test]
-  fn deserialize_system_time_from_secs() -> Result<(), JsonError> {
-    let time = from_json::<OtherTime>(r#"{"time": 1544129220}"#)?;
+  fn deserialize_system_time_from_secs() {
+    let time = from_json::<OtherTime>(r#"{"time": 1544129220}"#).unwrap();
     assert_eq!(time.time, UNIX_EPOCH + Duration::from_secs(1544129220));
-    Ok(())
   }
 
   #[test]
-  fn serialize_system_time_to_rfc3339() -> Result<(), JsonError> {
+  fn serialize_system_time_to_rfc3339() {
     let time = OtherTime {
       time: UNIX_EPOCH + Duration::from_secs(1544129220),
     };
-    let json = to_json(&time)?;
+    let json = to_json(&time).unwrap();
     assert_eq!(json, r#"{"time":"2018-12-06T20:47:00+00:00"}"#);
-    Ok(())
   }
 
   #[derive(Debug, Deserialize, Serialize)]
@@ -299,10 +294,9 @@ mod tests {
   }
 
   #[test]
-  fn deserialize_system_time_from_millis() -> Result<(), JsonError> {
-    let time = from_json::<MsTime>(r#"{"time": 1517461200000}"#)?;
+  fn deserialize_system_time_from_millis() {
+    let time = from_json::<MsTime>(r#"{"time": 1517461200000}"#).unwrap();
     assert_eq!(time.time, UNIX_EPOCH + Duration::from_secs(1517461200));
-    Ok(())
   }
 
 
@@ -316,12 +310,11 @@ mod tests {
   }
 
   #[test]
-  fn deserialize_system_time_from_millis_in_tz() -> Result<(), JsonError> {
+  fn deserialize_system_time_from_millis_in_tz() {
     // This time stamp represents 2018-02-01T00:00:00-05:00:
     // $ date --date='2018-02-01T00:00:00-05:00' +'%s'
-    let time = from_json::<MsTimeEST>(r#"{"time": 1517461200000}"#)?;
+    let time = from_json::<MsTimeEST>(r#"{"time": 1517461200000}"#).unwrap();
     let expected = parse_system_time_from_str("2018-02-01T00:00:00.000Z").unwrap();
     assert_eq!(time.time, expected);
-    Ok(())
   }
 }
