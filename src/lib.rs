@@ -46,8 +46,9 @@ const DATE_PARSE_FNS: [DateFn; 1] = [|s| {
 }];
 
 
-/// Parse a `SystemTime` from a string.
-fn parse_system_time_from_str(time: &str, parse_fns: &[DateFn]) -> Option<SystemTime> {
+/// Parse a `SystemTime` from a string using any of the provided parsing
+/// functions.
+fn parse_system_time_from_str_impl(time: &str, parse_fns: &[DateFn]) -> Option<SystemTime> {
   for parse_fn in parse_fns {
     // Ideally we would want to only continue in case of
     // ParseErrorKind::Invalid. However, that member is private...
@@ -69,13 +70,19 @@ fn parse_system_time_from_str(time: &str, parse_fns: &[DateFn]) -> Option<System
 }
 
 
+/// Parse a `SystemTime` from a string.
+pub fn parse_system_time_from_str(time: &str) -> Option<SystemTime> {
+  parse_system_time_from_str_impl(&time, &TIME_PARSE_FNS)
+}
+
+
 /// Deserialize a time stamp as a `SystemTime`.
 pub fn system_time_from_str<'de, D>(deserializer: D) -> Result<SystemTime, D::Error>
 where
   D: Deserializer<'de>,
 {
   let time = String::deserialize(deserializer)?;
-  parse_system_time_from_str(&time, &TIME_PARSE_FNS)
+  parse_system_time_from_str_impl(&time, &TIME_PARSE_FNS)
     .ok_or_else(|| Error::invalid_value(Unexpected::Str(&time), &"a time stamp string"))
 }
 
@@ -88,7 +95,7 @@ where
   D: Deserializer<'de>,
 {
   match Option::<String>::deserialize(deserializer)? {
-    Some(time) => parse_system_time_from_str(&time, &TIME_PARSE_FNS)
+    Some(time) => parse_system_time_from_str_impl(&time, &TIME_PARSE_FNS)
       .ok_or_else(|| Error::invalid_value(Unexpected::Str(&time), &"an optional time stamp string"))
       .map(Option::Some),
     None => Ok(None),
@@ -102,7 +109,7 @@ where
   D: Deserializer<'de>,
 {
   let date = String::deserialize(deserializer)?;
-  parse_system_time_from_str(&date, &DATE_PARSE_FNS)
+  parse_system_time_from_str_impl(&date, &DATE_PARSE_FNS)
     .ok_or_else(|| Error::invalid_value(Unexpected::Str(&date), &"a date string"))
 }
 
@@ -184,6 +191,13 @@ mod tests {
   use serde_json::to_string as to_json;
   use serde_json::Error as JsonError;
 
+
+  #[test]
+  fn parse_time() {
+    let time = parse_system_time_from_str("2018-04-01T12:00:00.000Z").unwrap();
+    let expected = UNIX_EPOCH + Duration::from_secs(1522584000);
+    assert_eq!(time, expected)
+  }
 
   #[derive(Debug, Deserialize)]
   struct Time {
