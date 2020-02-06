@@ -86,6 +86,12 @@ pub fn parse_system_time_from_str(time: &str) -> Option<SystemTime> {
 }
 
 
+/// Parse a `SystemTime` from a date string.
+pub fn parse_system_time_from_date_str(time: &str) -> Option<SystemTime> {
+  parse_system_time_from_str_impl(&time, &DATE_PARSE_FNS)
+}
+
+
 /// Deserialize a time stamp as a `SystemTime`.
 pub fn system_time_from_str<'de, D>(deserializer: D) -> Result<SystemTime, D::Error>
 where
@@ -241,6 +247,13 @@ mod tests {
       let time = from_json::<Time>(json).unwrap();
       assert_eq!(time.time, UNIX_EPOCH + Duration::from_secs(1522584000));
     }
+  }
+
+  #[test]
+  fn parse_date() {
+    let time = parse_system_time_from_date_str("2019-08-01").unwrap();
+    let expected = UNIX_EPOCH + Duration::from_secs(1564617600);
+    assert_eq!(time, expected)
   }
 
   #[derive(Debug, Deserialize)]
