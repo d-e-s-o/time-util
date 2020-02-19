@@ -9,9 +9,15 @@
 //! from. We treat such a time as having no associated time zone. Think
 //! of it as being in UTC.
 
+mod math;
 mod parse;
 mod serde;
 mod timezone;
+
+pub use crate::math::days_back;
+pub use crate::math::days_back_from;
+pub use crate::math::next_day;
+pub use crate::math::tomorrow;
 
 pub use crate::parse::parse_system_time_from_date_str;
 pub use crate::parse::parse_system_time_from_str;
