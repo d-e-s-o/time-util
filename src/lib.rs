@@ -9,6 +9,7 @@
 //! from. We treat such a time as having no associated time zone. Think
 //! of it as being in UTC.
 
+mod parse;
 mod timezone;
 
 use std::convert::TryInto;
@@ -16,12 +17,8 @@ use std::time::Duration;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
-use chrono::naive::NaiveDate;
-use chrono::offset::FixedOffset;
 use chrono::offset::TimeZone as _;
 use chrono::offset::Utc;
-use chrono::DateTime;
-use chrono::ParseError;
 
 use serde::de::Deserializer;
 use serde::de::Error;
@@ -29,67 +26,18 @@ use serde::de::Unexpected;
 use serde::ser::Serializer;
 use serde::Deserialize;
 
+use crate::parse::parse_system_time_from_str_impl;
+use crate::parse::DATE_PARSE_FNS;
+use crate::parse::TIME_PARSE_FNS;
 use crate::timezone::TimeZone;
+
+pub use crate::parse::parse_system_time_from_date_str;
+pub use crate::parse::parse_system_time_from_str;
 
 /// The Eastern Standard Time time zone.
 pub use crate::timezone::EST;
 /// The Coordinated Universal Time time zone.
 pub use crate::timezone::UTC;
-
-
-type DateFn = fn(&str) -> Result<DateTime<FixedOffset>, ParseError>;
-
-/// The list of time stamp formats we support.
-const TIME_PARSE_FNS: [DateFn; 3] = [
-  |s| FixedOffset::east(0).datetime_from_str(s, "%Y-%m-%dT%H:%M:%S%.fZ"),
-  |s| FixedOffset::east(0).datetime_from_str(s, "%Y-%m-%dT%H:%M:%SZ"),
-  |s| DateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%S%.f%z"),
-];
-
-const DATE_PARSE_FNS: [DateFn; 1] = [|s| {
-  NaiveDate::parse_from_str(s, "%Y-%m-%d").and_then(|date| {
-    Ok(DateTime::from_utc(
-      date.and_hms(0, 0, 0),
-      FixedOffset::east(0),
-    ))
-  })
-}];
-
-
-/// Parse a `SystemTime` from a string using any of the provided parsing
-/// functions.
-fn parse_system_time_from_str_impl(time: &str, parse_fns: &[DateFn]) -> Option<SystemTime> {
-  for parse_fn in parse_fns {
-    // Ideally we would want to only continue in case of
-    // ParseErrorKind::Invalid. However, that member is private...
-    let datetime = match parse_fn(&time) {
-      Ok(datetime) => datetime,
-      Err(_) => continue,
-    };
-
-    let sec = datetime.timestamp();
-    let nsec = datetime.timestamp_subsec_nanos();
-    let systime = if sec < 0 {
-      UNIX_EPOCH - Duration::new(-sec as u64, 0) + Duration::new(0, nsec)
-    } else {
-      UNIX_EPOCH + Duration::new(sec as u64, nsec)
-    };
-    return Some(systime)
-  }
-  None
-}
-
-
-/// Parse a `SystemTime` from a string.
-pub fn parse_system_time_from_str(time: &str) -> Option<SystemTime> {
-  parse_system_time_from_str_impl(&time, &TIME_PARSE_FNS)
-}
-
-
-/// Parse a `SystemTime` from a date string.
-pub fn parse_system_time_from_date_str(time: &str) -> Option<SystemTime> {
-  parse_system_time_from_str_impl(&time, &DATE_PARSE_FNS)
-}
 
 
 /// Deserialize a time stamp as a `SystemTime`.
@@ -221,13 +169,8 @@ mod tests {
   use serde_json::from_str as from_json;
   use serde_json::to_string as to_json;
 
+  use crate::parse_system_time_from_str;
 
-  #[test]
-  fn parse_time() {
-    let time = parse_system_time_from_str("2018-04-01T12:00:00.000Z").unwrap();
-    let expected = UNIX_EPOCH + Duration::from_secs(1522584000);
-    assert_eq!(time, expected)
-  }
 
   #[derive(Debug, Deserialize)]
   struct Time {
@@ -247,13 +190,6 @@ mod tests {
       let time = from_json::<Time>(json).unwrap();
       assert_eq!(time.time, UNIX_EPOCH + Duration::from_secs(1522584000));
     }
-  }
-
-  #[test]
-  fn parse_date() {
-    let time = parse_system_time_from_date_str("2019-08-01").unwrap();
-    let expected = UNIX_EPOCH + Duration::from_secs(1564617600);
-    assert_eq!(time, expected)
   }
 
   #[derive(Debug, Deserialize)]
