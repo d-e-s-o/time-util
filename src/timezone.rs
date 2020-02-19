@@ -32,6 +32,15 @@ pub trait TimeZone {
       Offset::East(offset) => time + Duration::from_secs(offset.into()),
     }
   }
+
+  /// Correct a system time by subtracting our offset.
+  fn sub(time: SystemTime) -> SystemTime {
+    match Self::OFFSET {
+      Offset::None => time,
+      Offset::West(offset) => time + Duration::from_secs(offset.into()),
+      Offset::East(offset) => time - Duration::from_secs(offset.into()),
+    }
+  }
 }
 
 

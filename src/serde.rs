@@ -139,6 +139,23 @@ where
 }
 
 
+/// Serialize a `SystemTime` into a timestamp containing the
+/// milliseconds since 1970-01-01.
+///
+/// The given time zone type specifies the time zone in which the
+/// resulting time stamp is in.
+pub fn system_time_to_millis_in_tz<TZ, S>(
+  time: &SystemTime,
+  serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+  S: Serializer,
+  TZ: TimeZone,
+{
+  system_time_to_millis(&TZ::sub(*time), serializer)
+}
+
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -235,17 +252,21 @@ mod tests {
   struct MsTimeEST {
     #[serde(
       deserialize_with = "system_time_from_millis_in_tz::<EST, _>",
-      serialize_with = "system_time_to_rfc3339",
+      serialize_with = "system_time_to_millis_in_tz::<EST, _>",
     )]
     time: SystemTime,
   }
 
   #[test]
-  fn deserialize_system_time_from_millis_in_tz() {
+  fn deserialize_serialize_system_time_millis_in_tz() {
     // This time stamp represents 2018-02-01T00:00:00-05:00:
     // $ date --date='2018-02-01T00:00:00-05:00' +'%s'
     let time = from_json::<MsTimeEST>(r#"{"time": 1517461200000}"#).unwrap();
     let expected = parse_system_time_from_str("2018-02-01T00:00:00.000Z").unwrap();
+    assert_eq!(time.time, expected);
+
+    let json = to_json::<MsTimeEST>(&time).unwrap();
+    let time = from_json::<MsTimeEST>(&json).unwrap();
     assert_eq!(time.time, expected);
   }
 }

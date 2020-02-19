@@ -45,6 +45,7 @@ pub use crate::serde::{
   system_time_from_secs,
   system_time_from_str,
   system_time_to_millis,
+  system_time_to_millis_in_tz,
   system_time_to_rfc3339,
 };
 
