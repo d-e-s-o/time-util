@@ -9,30 +9,47 @@
 //! from. We treat such a time as having no associated time zone. Think
 //! of it as being in UTC.
 
+#[cfg(feature = "math")]
 mod math;
+#[cfg(any(test, feature = "chrono"))]
 mod parse;
+#[cfg(any(test, all(feature = "chrono", feature = "serde")))]
 mod serde;
+#[cfg(any(test, feature = "chrono"))]
 mod timezone;
 
-pub use crate::math::days_back;
-pub use crate::math::days_back_from;
-pub use crate::math::next_day;
-pub use crate::math::tomorrow;
+#[cfg(not(any(feature = "math", feature = "chrono", feature = "serde")))]
+compile_error!("Please specify one of the available features: math, chrono, or serde");
 
-pub use crate::parse::parse_system_time_from_date_str;
-pub use crate::parse::parse_system_time_from_str;
+#[cfg(feature = "math")]
+pub use crate::math::{
+  days_back,
+  days_back_from,
+  next_day,
+  tomorrow,
+};
 
-pub use crate::serde::optional_system_time_from_str;
-pub use crate::serde::optional_system_time_to_rfc3339;
-pub use crate::serde::system_time_from_date_str;
-pub use crate::serde::system_time_from_millis;
-pub use crate::serde::system_time_from_millis_in_tz;
-pub use crate::serde::system_time_from_secs;
-pub use crate::serde::system_time_from_str;
-pub use crate::serde::system_time_to_millis;
-pub use crate::serde::system_time_to_rfc3339;
+#[cfg(feature = "chrono")]
+pub use crate::parse::{
+  parse_system_time_from_date_str,
+  parse_system_time_from_str,
+};
 
-/// The Eastern Standard Time time zone.
-pub use crate::timezone::EST;
-/// The Coordinated Universal Time time zone.
-pub use crate::timezone::UTC;
+#[cfg(all(feature = "chrono", feature = "serde"))]
+pub use crate::serde::{
+  optional_system_time_from_str,
+  optional_system_time_to_rfc3339,
+  system_time_from_date_str,
+  system_time_from_millis,
+  system_time_from_millis_in_tz,
+  system_time_from_secs,
+  system_time_from_str,
+  system_time_to_millis,
+  system_time_to_rfc3339,
+};
+
+#[cfg(feature = "chrono")]
+pub use crate::timezone::{
+  EST,
+  UTC,
+};

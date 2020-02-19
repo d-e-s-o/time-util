@@ -12,18 +12,32 @@ A crate providing miscellaneous functionality for working with time
 stamps.
 """
 
+[features]
+math = ["math-util"]
+# The following features are not explicitly listed:
+# - chrono
+# - serde
+
 [dependencies.chrono]
 version = "0.4"
 default-features = false
 features = ["std"]
+optional = true
 
 [dependencies.math-util]
 version = "0.1"
 default-features = false
+optional = true
 
 [dependencies.serde]
 version = "1.0"
 default-features = false
+optional = true
+
+[dev-dependencies.chrono]
+version = "0.4"
+default-features = false
+features = ["std"]
 
 [dev-dependencies.serde]
 version = "1.0"

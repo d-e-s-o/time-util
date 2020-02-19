@@ -53,7 +53,7 @@ pub fn tomorrow() -> SystemTime {
 pub mod tests {
   use super::*;
 
-  use crate::parse_system_time_from_str;
+  use crate::parse::parse_system_time_from_str;
 
 
   #[test]
