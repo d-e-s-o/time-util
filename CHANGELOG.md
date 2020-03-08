@@ -1,5 +1,5 @@
-Unreleased
-----------
+0.2.0
+-----
 - Added support for parsing a time stamp from a date string
 - Added support for serializing a time stamp for a given time zone
 - Added support for rudimentary time calculations
