@@ -1,3 +1,9 @@
+Unreleased
+----------
+- Use `chrono-tz` for time-zone aware conversions
+  - Removed custom time-zone logic
+
+
 0.2.0
 -----
 - Added support for parsing a time stamp from a date string

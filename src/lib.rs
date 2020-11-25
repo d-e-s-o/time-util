@@ -15,11 +15,10 @@ mod math;
 mod parse;
 #[cfg(any(test, all(feature = "chrono", feature = "serde")))]
 mod serde;
-#[cfg(any(test, feature = "chrono"))]
-mod timezone;
 
+// We treat chrono-tz as optional on top of chrono.
 #[cfg(not(any(feature = "math", feature = "chrono", feature = "serde")))]
-compile_error!("Please specify one of the available features: math, chrono, or serde");
+compile_error!("Please specify one of the features: math, chrono, or serde");
 
 #[cfg(feature = "math")]
 pub use crate::math::{
@@ -41,16 +40,14 @@ pub use crate::serde::{
   optional_system_time_to_rfc3339,
   system_time_from_date_str,
   system_time_from_millis,
-  system_time_from_millis_in_tz,
   system_time_from_secs,
   system_time_from_str,
   system_time_to_millis,
-  system_time_to_millis_in_tz,
   system_time_to_rfc3339,
 };
 
-#[cfg(feature = "chrono")]
-pub use crate::timezone::{
-  EST,
-  UTC,
+#[cfg(all(feature = "chrono", feature = "chrono-tz", feature = "serde"))]
+pub use crate::serde::{
+  system_time_from_millis_in_new_york,
+  system_time_to_millis_in_new_york,
 };

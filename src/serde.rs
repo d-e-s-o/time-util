@@ -1,13 +1,16 @@
 // Copyright (C) 2020 Daniel Mueller <deso@posteo.net>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::convert::TryInto;
 use std::time::Duration;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
+#[cfg(feature = "chrono-tz")]
 use chrono::offset::TimeZone as _;
 use chrono::offset::Utc;
+use chrono::DateTime;
+#[cfg(feature = "chrono-tz")]
+use chrono_tz::America::New_York;
 
 use serde::de::Deserializer;
 use serde::de::Error;
@@ -18,7 +21,6 @@ use serde::Deserialize;
 use crate::parse::parse_system_time_from_str_impl;
 use crate::parse::DATE_PARSE_FNS;
 use crate::parse::TIME_PARSE_FNS;
-use crate::timezone::TimeZone;
 
 
 /// Deserialize a time stamp as a `SystemTime`.
@@ -83,17 +85,18 @@ where
 
 
 /// Deserialize a `SystemTime` from a timestamp containing the
-/// milliseconds since 1970-01-01 in a given time zone.
-///
-/// The given time zone type specifies the time zone in which the
-/// to-be-parsed time stamp is provided in. It will then be converted to
-/// UTC.
-pub fn system_time_from_millis_in_tz<'de, TZ, D>(deserializer: D) -> Result<SystemTime, D::Error>
+/// milliseconds since 1970-01-01 in the New York time zone.
+#[cfg(feature = "chrono-tz")]
+pub fn system_time_from_millis_in_new_york<'de, D>(deserializer: D) -> Result<SystemTime, D::Error>
 where
   D: Deserializer<'de>,
-  TZ: TimeZone,
 {
-  system_time_from_millis(deserializer).map(TZ::add)
+  let time = system_time_from_millis(deserializer)?;
+  let naive_time = DateTime::<Utc>::from(time).naive_local();
+  let ny_time = New_York.from_utc_datetime(&naive_time);
+  let utc_time = Utc.from_local_datetime(&ny_time.naive_local()).unwrap();
+
+  Ok(SystemTime::from(utc_time))
 }
 
 
@@ -136,19 +139,18 @@ where
 
 
 /// Serialize a `SystemTime` into a timestamp containing the
-/// milliseconds since 1970-01-01.
-///
-/// The given time zone type specifies the time zone in which the
-/// resulting time stamp is in.
-pub fn system_time_to_millis_in_tz<TZ, S>(
+/// milliseconds since 1970-01-01 in New York.
+#[cfg(feature = "chrono-tz")]
+pub fn system_time_to_millis_in_new_york<S>(
   time: &SystemTime,
   serializer: S,
 ) -> Result<S::Ok, S::Error>
 where
   S: Serializer,
-  TZ: TimeZone,
 {
-  system_time_to_millis(&TZ::sub(*time), serializer)
+  let utc_time = DateTime::<Utc>::from(*time);
+  let ny_time = New_York.from_local_datetime(&utc_time.naive_utc()).unwrap();
+  system_time_to_millis(&SystemTime::from(ny_time), serializer)
 }
 
 
@@ -163,8 +165,8 @@ mod tests {
   use serde_json::from_str as from_json;
   use serde_json::to_string as to_json;
 
+  #[cfg(feature = "chrono-tz")]
   use crate::parse::parse_system_time_from_str;
-  use crate::timezone::EST;
 
 
   #[derive(Debug, Deserialize)]
@@ -245,24 +247,38 @@ mod tests {
 
 
   #[derive(Debug, Deserialize, Serialize)]
-  struct MsTimeEST {
+  #[cfg(feature = "chrono-tz")]
+  struct MsTimeNY {
     #[serde(
-      deserialize_with = "system_time_from_millis_in_tz::<EST, _>",
-      serialize_with = "system_time_to_millis_in_tz::<EST, _>",
+      deserialize_with = "system_time_from_millis_in_new_york",
+      serialize_with = "system_time_to_millis_in_new_york",
     )]
     time: SystemTime,
   }
 
   #[test]
-  fn deserialize_serialize_system_time_millis_in_tz() {
+  #[cfg(feature = "chrono-tz")]
+  fn deserialize_serialize_system_time_millis_in_new_york() {
     // This time stamp represents 2018-02-01T00:00:00-05:00:
     // $ date --date='2018-02-01T00:00:00-05:00' +'%s'
-    let time = from_json::<MsTimeEST>(r#"{"time": 1517461200000}"#).unwrap();
+    let time = from_json::<MsTimeNY>(r#"{"time": 1517461200000}"#).unwrap();
     let expected = parse_system_time_from_str("2018-02-01T00:00:00.000Z").unwrap();
     assert_eq!(time.time, expected);
 
-    let json = to_json::<MsTimeEST>(&time).unwrap();
-    let time = from_json::<MsTimeEST>(&json).unwrap();
+    let json = to_json::<MsTimeNY>(&time).unwrap();
+    let time = from_json::<MsTimeNY>(&json).unwrap();
+    assert_eq!(time.time, expected);
+  }
+
+  #[test]
+  #[cfg(feature = "chrono-tz")]
+  fn deserialize_serialize_system_time_millis_in_new_york_daylight_savings() {
+    let time = from_json::<MsTimeNY>(r#"{"time": 1599537600000}"#).unwrap();
+    let expected = parse_system_time_from_str("2020-09-08T00:00:00.000Z").unwrap();
+    assert_eq!(time.time, expected);
+
+    let json = to_json::<MsTimeNY>(&time).unwrap();
+    let time = from_json::<MsTimeNY>(&json).unwrap();
     assert_eq!(time.time, expected);
   }
 }

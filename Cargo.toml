@@ -16,10 +16,17 @@ stamps.
 math = ["math-util"]
 # The following features are not explicitly listed:
 # - chrono
+# - chrono-tz
 # - serde
 
 [dependencies.chrono]
 version = "0.4"
+default-features = false
+features = ["std"]
+optional = true
+
+[dependencies.chrono-tz]
+version = "0.5.3"
 default-features = false
 features = ["std"]
 optional = true
