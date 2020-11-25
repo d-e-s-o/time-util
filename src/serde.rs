@@ -102,11 +102,7 @@ pub fn system_time_to_rfc3339<S>(time: &SystemTime, serializer: S) -> Result<S::
 where
   S: Serializer,
 {
-  let duration = time.duration_since(UNIX_EPOCH).unwrap();
-  let secs = duration.as_secs().try_into().unwrap();
-  let nanos = duration.subsec_nanos();
-  let string = Utc.timestamp(secs, nanos).to_rfc3339();
-
+  let string = DateTime::<Utc>::from(*time).to_rfc3339();
   serializer.serialize_str(&string)
 }
 
