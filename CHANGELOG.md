@@ -1,5 +1,5 @@
-Unreleased
-----------
+0.3.0
+-----
 - Use `chrono-tz` for time-zone aware conversions
   - Removed custom time-zone logic
 
