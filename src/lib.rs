@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2020 Daniel Mueller <deso@posteo.net>
+// Copyright (C) 2019-2021 Daniel Mueller <deso@posteo.net>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 //! A crate for more or less frequently used time parsing and formatting
@@ -13,6 +13,8 @@
 mod math;
 #[cfg(any(test, feature = "chrono"))]
 mod parse;
+#[cfg(any(test, feature = "chrono"))]
+mod print;
 #[cfg(any(test, all(feature = "chrono", feature = "serde")))]
 mod serde;
 
@@ -33,6 +35,9 @@ pub use crate::parse::{
   parse_system_time_from_date_str,
   parse_system_time_from_str,
 };
+
+#[cfg(feature = "chrono")]
+pub use crate::print::print_system_time_to_rfc3339;
 
 #[cfg(all(feature = "chrono", feature = "serde"))]
 pub use crate::serde::{

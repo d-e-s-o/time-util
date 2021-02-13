@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Daniel Mueller <deso@posteo.net>
+// Copyright (C) 2020-2021 Daniel Mueller <deso@posteo.net>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::time::Duration;
@@ -7,8 +7,6 @@ use std::time::UNIX_EPOCH;
 
 #[cfg(feature = "chrono-tz")]
 use chrono::offset::TimeZone as _;
-use chrono::offset::Utc;
-use chrono::DateTime;
 #[cfg(feature = "chrono-tz")]
 use chrono_tz::America::New_York;
 
@@ -21,6 +19,7 @@ use serde::Deserialize;
 use crate::parse::parse_system_time_from_str_impl;
 use crate::parse::DATE_PARSE_FNS;
 use crate::parse::TIME_PARSE_FNS;
+use crate::print::print_system_time_to_rfc3339;
 
 
 /// Deserialize a time stamp as a `SystemTime`.
@@ -105,7 +104,7 @@ pub fn system_time_to_rfc3339<S>(time: &SystemTime, serializer: S) -> Result<S::
 where
   S: Serializer,
 {
-  let string = DateTime::<Utc>::from(*time).to_rfc3339();
+  let string = print_system_time_to_rfc3339(time);
   serializer.serialize_str(&string)
 }
 
@@ -227,7 +226,7 @@ mod tests {
       time: UNIX_EPOCH + Duration::from_secs(1544129220),
     };
     let json = to_json(&time).unwrap();
-    assert_eq!(json, r#"{"time":"2018-12-06T20:47:00+00:00"}"#);
+    assert_eq!(json, r#"{"time":"2018-12-06T20:47:00.000Z"}"#);
   }
 
   #[derive(Debug, Deserialize, Serialize)]

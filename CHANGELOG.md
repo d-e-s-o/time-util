@@ -1,3 +1,8 @@
+Unreleased
+----------
+- Added support for printing a time as RFC 3339 time stamp
+
+
 0.3.0
 -----
 - Use `chrono-tz` for time-zone aware conversions
