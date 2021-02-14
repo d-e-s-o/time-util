@@ -9,6 +9,8 @@
 //! from. We treat such a time as having no associated time zone. Think
 //! of it as being in UTC.
 
+#[allow(clippy::let_and_return)]
+
 #[cfg(feature = "math")]
 mod math;
 #[cfg(any(test, feature = "chrono"))]

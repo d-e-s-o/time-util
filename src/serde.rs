@@ -184,7 +184,7 @@ mod tests {
 
     for json in &times {
       let time = from_json::<Time>(json).unwrap();
-      assert_eq!(time.time, UNIX_EPOCH + Duration::from_secs(1522584000));
+      assert_eq!(time.time, UNIX_EPOCH + Duration::from_secs(1_522_584_000));
     }
   }
 
@@ -200,7 +200,7 @@ mod tests {
 
     for json in &dates {
       let date = from_json::<Date>(json).unwrap();
-      assert_eq!(date.date, UNIX_EPOCH + Duration::from_secs(1564617600));
+      assert_eq!(date.date, UNIX_EPOCH + Duration::from_secs(1_564_617_600));
     }
   }
 
@@ -217,13 +217,13 @@ mod tests {
   #[test]
   fn deserialize_system_time_from_secs() {
     let time = from_json::<OtherTime>(r#"{"time": 1544129220}"#).unwrap();
-    assert_eq!(time.time, UNIX_EPOCH + Duration::from_secs(1544129220));
+    assert_eq!(time.time, UNIX_EPOCH + Duration::from_secs(1_544_129_220));
   }
 
   #[test]
   fn serialize_system_time_to_rfc3339() {
     let time = OtherTime {
-      time: UNIX_EPOCH + Duration::from_secs(1544129220),
+      time: UNIX_EPOCH + Duration::from_secs(1_544_129_220),
     };
     let json = to_json(&time).unwrap();
     assert_eq!(json, r#"{"time":"2018-12-06T20:47:00.000Z"}"#);
@@ -241,7 +241,7 @@ mod tests {
   #[test]
   fn deserialize_system_time_from_millis() {
     let time = from_json::<MsTime>(r#"{"time": 1517461200000}"#).unwrap();
-    assert_eq!(time.time, UNIX_EPOCH + Duration::from_secs(1517461200));
+    assert_eq!(time.time, UNIX_EPOCH + Duration::from_secs(1_517_461_200));
   }
 
 
