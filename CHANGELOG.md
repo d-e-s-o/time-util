@@ -1,5 +1,5 @@
-Unreleased
-----------
+0.3.1
+-----
 - Added support for printing a time as RFC 3339 time stamp
 
 
