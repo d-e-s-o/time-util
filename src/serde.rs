@@ -6,7 +6,11 @@ use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
 #[cfg(feature = "chrono-tz")]
-use chrono::offset::TimeZone as _;
+use chrono::{
+  offset::TimeZone as _,
+  DateTime,
+  Utc,
+};
 #[cfg(feature = "chrono-tz")]
 use chrono_tz::America::New_York;
 

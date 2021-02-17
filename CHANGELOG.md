@@ -1,3 +1,8 @@
+Unreleased
+----------
+- Added missing use declarations when feature `chrono-tz` is enabled
+
+
 0.3.1
 -----
 - Added support for printing a time as RFC 3339 time stamp
