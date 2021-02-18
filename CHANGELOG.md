@@ -1,6 +1,8 @@
 Unreleased
 ----------
 - Added missing use declarations when feature `chrono-tz` is enabled
+- Enabled CI pipeline comprising building, testing, and linting of the
+  project
 
 
 0.3.1

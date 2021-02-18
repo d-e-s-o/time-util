@@ -12,6 +12,9 @@ A crate providing miscellaneous functionality for working with time
 stamps.
 """
 
+[badges]
+gitlab = { repository = "d-e-s-o/time-util", branch = "master" }
+
 [features]
 math = ["math-util"]
 # The following features are not explicitly listed:
