@@ -1,9 +1,7 @@
 // Copyright (C) 2020-2021 Daniel Mueller <deso@posteo.net>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::time::Duration;
 use std::time::SystemTime;
-use std::time::UNIX_EPOCH;
 
 use chrono::naive::NaiveDate;
 use chrono::offset::FixedOffset;
@@ -41,15 +39,9 @@ pub(crate) fn parse_system_time_from_str_impl(
       Ok(datetime) => datetime,
       Err(_) => continue,
     };
-
-    let sec = datetime.timestamp();
-    let nsec = datetime.timestamp_subsec_nanos();
-    let systime = if sec < 0 {
-      UNIX_EPOCH - Duration::new(-sec as u64, 0) + Duration::new(0, nsec)
-    } else {
-      UNIX_EPOCH + Duration::new(sec as u64, nsec)
-    };
-    return Some(systime)
+    return Some(SystemTime::from(
+      datetime.with_timezone(&FixedOffset::east(0)),
+    ))
   }
   None
 }
@@ -70,6 +62,10 @@ pub fn parse_system_time_from_date_str(time: &str) -> Option<SystemTime> {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  use std::time::Duration;
+  use std::time::UNIX_EPOCH;
+
 
   #[test]
   fn parse_time() {
