@@ -24,6 +24,7 @@ use crate::parse::parse_system_time_from_str_impl;
 use crate::parse::DATE_PARSE_FNS;
 use crate::parse::TIME_PARSE_FNS;
 use crate::print::print_system_time_to_rfc3339;
+use crate::print::print_system_time_to_rfc3339_with_nanos;
 
 
 /// Deserialize a time stamp as a `SystemTime`.
@@ -112,6 +113,20 @@ where
   serializer.serialize_str(&string)
 }
 
+
+/// Serialize a `SystemTime` into a RFC3339 time stamp.
+pub fn system_time_to_rfc3339_with_nanos<S>(
+  time: &SystemTime,
+  serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+  S: Serializer,
+{
+  let string = print_system_time_to_rfc3339_with_nanos(time);
+  serializer.serialize_str(&string)
+}
+
+
 /// Serialize an optional `SystemTime` into a RFC3339 time stamp.
 pub fn optional_system_time_to_rfc3339<S>(
   time: &Option<SystemTime>,
@@ -122,6 +137,21 @@ where
 {
   match time {
     Some(time) => system_time_to_rfc3339(time, serializer),
+    None => serializer.serialize_none(),
+  }
+}
+
+
+/// Serialize an optional `SystemTime` into a RFC3339 time stamp.
+pub fn optional_system_time_to_rfc3339_with_nanos<S>(
+  time: &Option<SystemTime>,
+  serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+  S: Serializer,
+{
+  match time {
+    Some(time) => system_time_to_rfc3339_with_nanos(time, serializer),
     None => serializer.serialize_none(),
   }
 }

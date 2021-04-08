@@ -1,3 +1,9 @@
+Unreleased
+----------
+- Added support for printing and serializing time as RFC 3339 time stamp
+  with nanosecond resolution
+
+
 0.3.2
 -----
 - Added missing use declarations when feature `chrono-tz` is enabled

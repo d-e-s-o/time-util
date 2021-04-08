@@ -39,18 +39,23 @@ pub use crate::parse::{
 };
 
 #[cfg(feature = "chrono")]
-pub use crate::print::print_system_time_to_rfc3339;
+pub use crate::print::{
+  print_system_time_to_rfc3339,
+  print_system_time_to_rfc3339_with_nanos,
+};
 
 #[cfg(all(feature = "chrono", feature = "serde"))]
 pub use crate::serde::{
   optional_system_time_from_str,
   optional_system_time_to_rfc3339,
+  optional_system_time_to_rfc3339_with_nanos,
   system_time_from_date_str,
   system_time_from_millis,
   system_time_from_secs,
   system_time_from_str,
   system_time_to_millis,
   system_time_to_rfc3339,
+  system_time_to_rfc3339_with_nanos,
 };
 
 #[cfg(all(feature = "chrono", feature = "chrono-tz", feature = "serde"))]
