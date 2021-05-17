@@ -22,6 +22,9 @@ math = ["math-util"]
 # - chrono-tz
 # - serde
 
+[package.metadata.docs.rs]
+features = ["math", "chrono", "chrono-tz", "serde"]
+
 [dependencies.chrono]
 version = "0.4"
 default-features = false
