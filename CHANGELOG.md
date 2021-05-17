@@ -1,3 +1,8 @@
+Unreleased
+----------
+- Add support for printing a time as ISO 8601 date
+
+
 0.3.3
 -----
 - Added support for printing and serializing time as RFC 3339 time stamp

@@ -22,6 +22,12 @@ pub fn print_system_time_to_rfc3339_with_nanos(time: &SystemTime) -> String {
 }
 
 
+/// Print a `SystemTime` as a RFC3339 time stamp.
+pub fn print_system_time_to_iso8601_date(time: &SystemTime) -> String {
+  DateTime::<Utc>::from(*time).format("%Y-%m-%d").to_string()
+}
+
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -47,5 +53,20 @@ mod tests {
     let time = parse_system_time_from_str(string).unwrap();
     let result = print_system_time_to_rfc3339_with_nanos(&time);
     assert_eq!(result, string)
+  }
+
+
+  /// Check that we can format a `SystemTime` as an ISO 8601 date.
+  #[test]
+  fn print_iso8601_date() {
+    let string = "2018-05-07T23:59:59Z";
+    let time = parse_system_time_from_str(string).unwrap();
+    let result = print_system_time_to_iso8601_date(&time);
+    assert_eq!(result, "2018-05-07");
+
+    let string = "2018-05-07T00:00:00Z";
+    let time = parse_system_time_from_str(string).unwrap();
+    let result = print_system_time_to_iso8601_date(&time);
+    assert_eq!(result, "2018-05-07");
   }
 }

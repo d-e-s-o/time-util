@@ -40,6 +40,7 @@ pub use crate::parse::{
 
 #[cfg(feature = "chrono")]
 pub use crate::print::{
+  print_system_time_to_iso8601_date,
   print_system_time_to_rfc3339,
   print_system_time_to_rfc3339_with_nanos,
 };
