@@ -74,6 +74,13 @@ mod tests {
     assert_eq!(time, expected)
   }
 
+  /// Check that parsing an unexpected time fails.
+  #[test]
+  fn parse_time_fail() {
+    let result = parse_system_time_from_str("2018-04-01TXX:00:00.000");
+    assert_eq!(result, None)
+  }
+
   #[test]
   fn parse_date() {
     let time = parse_system_time_from_date_str("2019-08-01").unwrap();
