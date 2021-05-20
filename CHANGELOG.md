@@ -1,5 +1,5 @@
-Unreleased
-----------
+0.3.4
+-----
 - Add support for printing a time as ISO 8601 date
 - Fixed `docs.rs` documentation build
 
